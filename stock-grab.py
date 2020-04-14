@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 
 # Program takes 3 arguments. File with list of stock symbols, 1 per line and 2 dates in format 2020-02-20.
-# Program uses yfinance api to pull open/close data for list of symbols for specified time and computes % chg.
+# Program uses yfinance aargs_list[2ipi to pull open/close data for list of symbols for specified time and computes % chg.
 
 from datetime import datetime, timedelta
 import sys
@@ -24,6 +24,10 @@ filename=args_list[0]
 str_start_date=args_list[1]
 str_end_date=args_list[2]
 
+#filename="symbols-ugh-R2"
+#str_start_date="2020-04-03"
+#str_end_date="2020-04-13"
+
 with open(filename) as f:
     symbol_list = [line.rstrip() for line in f]
 
@@ -35,17 +39,35 @@ end_datetime_object = datetime.strptime(str_end_date, '%Y-%m-%d')
 
 data = yf.download(symbol_list, start=start_datetime_object, end=end_datetime_object)
 
+#There is a whole bunch of wonkiness going on I don't totally understand. Some Stocks return nan values.
+#Gonna cycle through each and make sure none of them are doing that.
+screwed_up_data_flag=False
+
+for symbol in symbol_list:
+  open_price=data.iloc[0].Open.loc[symbol]
+  close_price=data.iloc[len(data)-1].Close.loc[symbol]
+
+  if math.isnan(open_price) or math.isnan(close_price):
+    screwed_up_data_flag=True
+
 #Fortunately the API is smart enough to grab data either on the dates specified or between the dates specified 
 # (if for instance a weekend date is passed as the end dates, it will grab the preevious friday's close data)
 
 actual_start_date=data.iloc[0].name                   #grab timestamp of 1st day in panda
-actual_end_date=data.iloc[len(data)-1].name           #grab timestamp of last day in panda
+if screwed_up_data_flag:
+  actual_end_date=data.iloc[len(data)-2].name           #grab timestamp of last day in panda
+  print("Nan Values Detected...look at dates carefully")
+else:
+  actual_end_date=data.iloc[len(data)-1].name
+
+
 print("Actual start date:", actual_start_date)
 print("Actual end date:", actual_end_date)
 
 for symbol in symbol_list:
   open_price=data.iloc[0].Open.loc[symbol]
-  close_price=data.iloc[len(data)-1].Close.loc[symbol]
+#  close_price=data.iloc[len(data)-1].Close.loc[symbol]
+  close_price=data.loc[actual_end_date].Close.loc[symbol]
   
   if math.isnan(open_price) or math.isnan(close_price): 
     print("nan value detected for symbol:", symbol +"...omitting from results. End date too soon? Stock exist on specified dates?")
