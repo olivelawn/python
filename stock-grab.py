@@ -53,12 +53,16 @@ today_datetime_object = datetime.today().date()
 
 todayonly=False
 range_not_ending_today=False
+range_ends_today=False
 
 if start_datetime_object_day == today_datetime_object and end_datetime_object_day == today_datetime_object:  #looking for just 1 day!
   todayonly=True
 
 if start_datetime_object_day != today_datetime_object and end_datetime_object_day != today_datetime_object:   #looking for range, but range does not include today
   range_not_ending_today=True
+
+if start_datetime_object_day != today_datetime_object and end_datetime_object_day == today_datetime_object:   #looking for range, end of range is today
+  range_ends_today=True
 
 if todayonly:
   data = yf.download(symbol_list, period="1d")
@@ -109,4 +113,19 @@ if range_not_ending_today:
       percent_chg_rounded = round(percent_chg, 2)
       symbol_percent_list_of_tuples.append((percent_chg_rounded, symbol))
 
+  sort_and_print(symbol_percent_list_of_tuples)
+
+if range_ends_today:
+  print("making 2 yfinance api calls... one for range and one for today...")
+  data_range = yf.download(symbol_list, start=start_datetime_object_day, end=end_datetime_object_day)
+  data_today = yf.download(symbol_list, period="1d")
+
+  for symbol in symbol_list:
+    open_price=data_range.iloc[0].Open.loc[symbol]
+    close_price=data_today.iloc[len(data_today)-1].Close.loc[symbol]
+    percent_chg = get_change(close_price, open_price)
+    percent_chg_rounded = round(percent_chg, 2)
+    symbol_percent_list_of_tuples.append((percent_chg_rounded, symbol))
+
+  print_actual_dates(start_datetime_object, end_datetime_object)
   sort_and_print(symbol_percent_list_of_tuples)
