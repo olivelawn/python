@@ -29,7 +29,7 @@ today_minus_three_months = today - timedelta(365/4)
 with open(filename) as f:
     symbol_list = [line.rstrip() for line in f]
 
-print(symbol_list)
+#print(symbol_list)
 
 data = yf.download(symbol_list, start=today_minus_three_months, end=today)
 
