@@ -9,11 +9,34 @@ import math
 import yfinance as yf
 import pandas as pd
 import numpy as np
+import config
+import mysql.connector
 
 def sort_and_print(symbol_percent_list_of_tuples):
   symbol_percent_list_of_tuples.sort(reverse=True)
   for value, symbol in symbol_percent_list_of_tuples:
     print(symbol, value)
+
+def create_stock_table():
+  create_stock_table_query = "CREATE TABLE IF NOT EXISTS stocks (id int(11) NOT NULL AUTO_INCREMENT, date date NOT NULL, PRIMARY KEY (id))"
+  cursor.execute(create_stock_table_query)
+  cnx.commit()
+   
+def does_column_exist(column):
+  column_exist_query = "SHOW COLUMNS FROM stocks LIKE '{}'".format(column)
+#  print(column_exist_query)
+  cursor.execute(column_exist_query)
+  cursor.fetchall()
+  return(cursor.rowcount)
+
+def add_column(column):
+  add_column_query = "ALTER TABLE stocks ADD `{}` FLOAT".format(column)
+  cursor.execute(add_column_query)
+  cnx.commit()
+
+#main
+cnx = mysql.connector.connect(user=config.USER, password=config.PASS, host=config.HOST, database=config.MYDB, auth_plugin='mysql_native_password')
+cursor = cnx.cursor()
 
 args_list = sys.argv
 del args_list[0]
@@ -28,7 +51,20 @@ today_minus_three_months = today - timedelta(365/4)
 
 with open(filename) as f:
     symbol_list = [line.rstrip() for line in f]
+#print(symbol_list)
 
+# create stock table
+create_stock_table()
+
+# could be more elegant with try/except. Adding a new column if dne.
+# this adds stock tickers as columns in stocks table
+for symbol in symbol_list:
+  if not does_column_exist(symbol):
+    add_column(symbol)
+
+#cursor.close()
+#cnx.close()
+exit()
 #print(symbol_list)
 
 data = yf.download(symbol_list, start=today_minus_three_months, end=today)
