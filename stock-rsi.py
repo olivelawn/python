@@ -18,13 +18,12 @@ def sort_and_print(symbol_percent_list_of_tuples):
     print(symbol, value)
 
 def create_stock_table():
-  create_stock_table_query = "CREATE TABLE IF NOT EXISTS stocks (id int(11) NOT NULL AUTO_INCREMENT, date date NOT NULL, PRIMARY KEY (id))"
+  create_stock_table_query = "CREATE TABLE IF NOT EXISTS stocks (date date NOT NULL, PRIMARY KEY (date))"
   cursor.execute(create_stock_table_query)
   cnx.commit()
    
 def does_column_exist(column):
   column_exist_query = "SHOW COLUMNS FROM stocks LIKE '{}'".format(column)
-#  print(column_exist_query)
   cursor.execute(column_exist_query)
   cursor.fetchall()
   return(cursor.rowcount)
@@ -32,6 +31,23 @@ def does_column_exist(column):
 def add_column(column):
   add_column_query = "ALTER TABLE stocks ADD `{}` FLOAT".format(column)
   cursor.execute(add_column_query)
+  cnx.commit()
+
+def insert_rsi(date, stocktuple):
+  rsivals = str()
+  stocks = str()
+  count = 0
+  for rsival, stock in stocktuple:
+    if count == 0:
+      rsivals = str(rsival)
+      stocks = "`" + stock + "`"
+    else:
+      rsivals = rsivals + ", " + str(rsival)
+      stocks = stocks + ", " + "`" + stock + "`"
+    count = count + 1
+
+  insert_rsi_query = "INSERT into stocks(date, {}) value('{}', {})".format(stocks,date,rsivals)
+  cursor.execute(insert_rsi_query)
   cnx.commit()
 
 #main
@@ -48,6 +64,7 @@ filename=args_list[0]
 
 today = datetime.today()
 today_minus_three_months = today - timedelta(365/4)
+today_Y_M_D = datetime.today().strftime('%Y-%m-%d')
 
 with open(filename) as f:
     symbol_list = [line.rstrip() for line in f]
@@ -62,11 +79,6 @@ for symbol in symbol_list:
   if not does_column_exist(symbol):
     add_column(symbol)
 
-#cursor.close()
-#cnx.close()
-exit()
-#print(symbol_list)
-
 data = yf.download(symbol_list, start=today_minus_three_months, end=today)
 
 for symbol in symbol_list:
@@ -80,4 +92,5 @@ for symbol in symbol_list:
   rsi_rounded = round(rsi[len(rsi)-1], 2)
   symbol_rsi_list_of_tuples.append((rsi_rounded, symbol))
 
+insert_rsi(today_Y_M_D, symbol_rsi_list_of_tuples)
 sort_and_print(symbol_rsi_list_of_tuples)
