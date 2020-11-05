@@ -1,0 +1,4 @@
+USER='***REMOVED***'
+PASS='***REMOVED***'
+HOST='***REMOVED***'
+MYDB='***REMOVED***'
