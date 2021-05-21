@@ -2,7 +2,6 @@
 
 # Program takes file with list of stock symbols.
 # Program uses yfinance api to pull open/close data for list of symbols and computes RSI
-# Testing Git. Will remove later
 
 from datetime import datetime, timedelta
 import sys
@@ -48,8 +47,11 @@ def insert_rsi(date, stocktuple):
     count = count + 1
 
   insert_rsi_query = "INSERT into stocks(date, {}) value('{}', {})".format(stocks,date,rsivals)
-  cursor.execute(insert_rsi_query)
-  cnx.commit()
+  try:
+    cursor.execute(insert_rsi_query)
+    cnx.commit()
+  except mysql.connector.Error as err:
+    print("Exception caught with mysql.connector, skipping mysql transaction: {}".format(err))
 
 #main
 cnx = mysql.connector.connect(user=config.USER, password=config.PASS, host=config.HOST, database=config.MYDB, auth_plugin='mysql_native_password')
