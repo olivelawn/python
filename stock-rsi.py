@@ -2,6 +2,7 @@
 
 # Program takes file with list of stock symbols.
 # Program uses yfinance api to pull open/close data for list of symbols and computes RSI
+# Testing Git. Will remove later
 
 from datetime import datetime, timedelta
 import sys
